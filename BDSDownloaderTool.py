@@ -1,8 +1,22 @@
+"""Copyright 2024 Franco Calegari
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License."""
+
 import requests
 import json
 import os
 import tkinter as tk
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, Menu
 import webbrowser
 
 CACHE_FILE = "versions_cache.json"
@@ -11,10 +25,32 @@ URL = "https://raw.githubusercontent.com/Bedrock-OSS/BDS-Versions/refs/heads/mai
 class BDSManagerApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("BDS Manager")
+        self.root.title("BDS Downloader")
+        self.create_menu()
         self.create_widgets()
         self.data = self.load_data()
         self.update_table()  # Ensure the table is populated at startup
+
+    def create_menu(self):
+        menu_bar = Menu(self.root)
+        self.root.config(menu=menu_bar)
+        
+        help_menu = Menu(menu_bar, tearoff=0)
+        help_menu.add_command(label="Sobre nosotros", command=self.show_about_info)
+        menu_bar.add_cascade(label="Ayuda", menu=help_menu)
+
+    def show_about_info(self):
+        about_text = (
+            "BDS Downloader\n"
+            "Versión 1.0\n"
+            "Creado por Franco Calegari\n\n"
+            "La información de las versiones se descarga desde el repositorio de GitHub:\n"
+            "https://github.com/Bedrock-OSS/BDS-Versions\n\n"
+            "Gracias a ellos, este programa es posible.\n\n"
+            "Este programa es de código abierto y gratuito.\n"
+            "Apache-2.0.\n"
+        )
+        messagebox.showinfo("Sobre nosotros", about_text)
 
     def create_widgets(self):
         self.platform_var = tk.StringVar(value="linux")
@@ -26,10 +62,10 @@ class BDSManagerApp:
         self.linux_rb = ttk.Radiobutton(self.platform_frame, text="Linux", variable=self.platform_var, value="linux")
         self.linux_rb.pack(side="left", padx=5, pady=5)
         
-        self.windows_rb = ttk.Radiobutton(self.platform_frame, text="Windows", variable=self.platform_var, value="win")
+        self.windows_rb = ttk.Radiobutton(self.platform_frame, text="Windows", variable=self.platform_var, value="windows")
         self.windows_rb.pack(side="left", padx=5, pady=5)
         
-        self.platform_var.trace("w", self.update_table)  # Update table when platform changes
+        self.platform_var.trace_add("write", self.update_table)  # Update table when platform changes
         
         self.search_frame = ttk.LabelFrame(self.root, text="Search Version")
         self.search_frame.pack(padx=10, pady=5, fill="x")
@@ -74,7 +110,7 @@ class BDSManagerApp:
             messagebox.showerror("Error", f"Failed to update cache: {e}")
             return self.data if hasattr(self, 'data') else {}
 
-    def update_table(self, event=None, *args):
+    def update_table(self, *args):
         search_text = self.search_entry.get().lower()
         platform = self.platform_var.get()
         self.tree.delete(*self.tree.get_children())
@@ -95,6 +131,8 @@ class BDSManagerApp:
         if not version:
             messagebox.showwarning("Warning", "Please select a version to download.")
             return
+        if platform == "windows":
+            platform = "win"  # Adjust platform for Windows download link
         url = f"https://minecraft.azureedge.net/bin-{platform}/bedrock-server-{version}.zip"
         webbrowser.open(url)
 
